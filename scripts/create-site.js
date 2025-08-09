@@ -91,6 +91,8 @@ async function main() {
   console.log(`Generating brand and static pages for: ${niche}`);
   const brand = await openai.generateBrand(niche);
   const staticPages = await openai.generateStaticPages({ niche, brand });
+  await writeBrandConfig({ brand });
+  await generateBrandAssets({ brand });
   await writeStaticPages({ brand, staticPages });
 
   console.log(`Generating site plan for niche: ${niche}${mock ? ' (mock)' : ''}`);
@@ -332,12 +334,33 @@ async function writeStaticPages({ brand, staticPages }) {
 
   await writeFileSafe(path.join(pagesDir, 'terms.astro'), `---\nimport Base from '../layouts/Base.astro';\nimport Header from '../components/Header.astro';\nimport Footer from '../components/Footer.astro';\n---\n<Base title="Terms of Service">\n  <Fragment slot=\"header\"><Header /></Fragment>\n  ${staticPages.terms}\n  <Fragment slot=\"footer\"><Footer /></Fragment>\n</Base>\n`);
 
-  // Inject homepage hero by prepending to index via a marker
+  // Inject homepage hero by replacing HERO block
   const indexPath = path.join(root, 'src', 'pages', 'index.astro');
   try {
     const current = await fsp.readFile(indexPath, 'utf8');
-    const updated = current.replace('<h1 style="margin:1rem 0 1rem;">Latest Posts</h1>', `${heroBlock}\n<h1 style="margin:1rem 0 1rem;">Latest Posts</h1>`);
+    const updated = current.replace(/<!-- HERO START -->[\s\S]*?<!-- HERO END -->/, `<!-- HERO START -->\n${heroBlock}\n<!-- HERO END -->`);
     await fsp.writeFile(indexPath, updated, 'utf8');
+  } catch {}
+}
+
+async function writeBrandConfig({ brand }) {
+  const dataDir = path.join(root, 'public');
+  await ensureDir(dataDir);
+  await writeFileSafe(path.join(dataDir, 'brand.json'), JSON.stringify(brand, null, 2));
+}
+
+async function generateBrandAssets({ brand }) {
+  const publicDir = path.join(root, 'public');
+  await ensureDir(publicDir);
+  const logoPath = path.join(publicDir, 'logo.png');
+  const favPath = path.join(publicDir, 'favicon.ico');
+  try {
+    await sharp({ create: { width: 512, height: 512, channels: 3, background: { r: 30, g: 41, b: 59 } } })
+      .png()
+      .toFile(logoPath);
+    await sharp({ create: { width: 64, height: 64, channels: 3, background: { r: 30, g: 41, b: 59 } } })
+      .png()
+      .toFile(favPath);
   } catch {}
 }
 
