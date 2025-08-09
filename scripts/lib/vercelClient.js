@@ -13,10 +13,22 @@ export async function ensureVercelProject({ projectName, repoUrl }) {
   const base = teamId ? `https://api.vercel.com/v9/projects?teamId=${teamId}` : 'https://api.vercel.com/v9/projects';
 
   // Try to create project
+  // Try to include git repository link if provided
+  let gitRepository = undefined;
+  if (repoUrl && repoUrl.includes('github.com')) {
+    try {
+      const match = repoUrl.match(/github\.com\/(.+?)\/(.+?)(?:\.git)?$/i);
+      if (match) {
+        const owner = match[1];
+        const repo = match[2];
+        gitRepository = { type: 'github', repo: `${owner}/${repo}` };
+      }
+    } catch {}
+  }
   const res = await fetch(base, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ name: projectName, framework: 'astro' })
+    body: JSON.stringify({ name: projectName, framework: 'astro', gitRepository })
   });
   let data;
   if (res.status === 409) {
