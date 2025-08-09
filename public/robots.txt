@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Update to your production URL
+Sitemap: https://your-site-on-vercel.app/sitemap-index.xml
+

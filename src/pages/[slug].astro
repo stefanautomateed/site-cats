@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+// Dynamic post page by `frontmatter.slug`
+export async function getStaticPaths() {
+  const modules = import.meta.glob('../../content/**/*.mdx');
+  const entries = await Promise.all(
+    Object.entries(modules).map(async ([path, loader]) => {
+      const mod = await loader();
+      const fm = (mod as any).frontmatter || {};
+      if (!fm.slug) return null;
+      return {
+        params: { slug: fm.slug },
+        props: { mod }
+      };
+    })
+  );
+  return (entries.filter(Boolean) as any[]);
+}
+
+const { mod } = Astro.props;
+const { Content, frontmatter } = mod as any;
+---
+<Base title={frontmatter.title} description={frontmatter.description}>
+  <Fragment slot="header"><Header /></Fragment>
+  <article>
+    <h1>{frontmatter.title}</h1>
+    <Content />
+    {frontmatter.cluster && (
+      <p style="margin-top: 2rem;">
+        More in <a href={`/site/category/${encodeURIComponent(frontmatter.cluster)}/`}>{frontmatter.cluster}</a>
+      </p>
+    )}
+  </article>
+  <Fragment slot="footer"><Footer /></Fragment>
+</Base>
+

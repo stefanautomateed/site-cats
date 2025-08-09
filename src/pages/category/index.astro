@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const modules = import.meta.glob('../../../content/**/*.mdx', { eager: true });
+type PostModule = { frontmatter: any } & Record<string, any>;
+
+const posts: Array<{ title: string; slug: string; cluster: string; image?: string; }> = Object
+  .values(modules)
+  .map((m: any) => {
+    const fm = (m as PostModule).frontmatter || {};
+    return {
+      title: fm.title || fm.slug,
+      slug: fm.slug,
+      cluster: fm.cluster || 'Uncategorized',
+      image: fm.image || undefined
+    };
+  })
+  .filter((p) => !!p.slug);
+
+const clusters = Array.from(new Set(posts.map((p) => p.cluster))).sort((a, b) => a.localeCompare(b));
+---
+<Base title="Categories">
+  <Fragment slot="header"><Header /></Fragment>
+  <h1>All Categories</h1>
+  <ul>
+    {clusters.map((c) => (
+      <li><a href={`/site/category/${encodeURIComponent(c)}/`}>{c}</a></li>
+    ))}
+  </ul>
+  <Fragment slot="footer"><Footer /></Fragment>
+</Base>
+
+

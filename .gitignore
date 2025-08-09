@@ -1,0 +1,14 @@
+node_modules/
+.env
+.vercel/
+.DS_Store
+dist/
+.astro/
+coverage/
+tmp/
+**/.cache/
+public/images/**
+!public/images/.gitkeep
+content/**
+!content/.gitkeep
+
